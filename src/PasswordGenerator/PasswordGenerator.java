@@ -6,9 +6,10 @@ public class PasswordGenerator {
     private int exactPasswordLength;
     private int[] minMaxRange;
 
-    private boolean[] caseType;
     private boolean includeGeneralShare;
+    private boolean[] caseTypeState;
     private int[] generalShare;
+    private char[][] charCollection;
 
     private boolean checkScopeStatus, checkShareSum;
 
@@ -25,8 +26,9 @@ public class PasswordGenerator {
         /* Array collects percentage use between:
         regular characters (upper | lower) | numbers | special characters */
         this.includeGeneralShare = true; // random value
-        this.caseType = new boolean[] {true, true, true, true};
+        this.caseTypeState = new boolean[] {true, true, true, true};
         this.generalShare = new int[] {25, 25, 25, 25};
+        this.charCollection = fillCollection();
 
         // Internal additional
         this.checkScopeStatus = true;
@@ -45,17 +47,17 @@ public class PasswordGenerator {
             tempRandom = (int) (Math.random() * maxValue + 1);
             maxValue -= tempRandom;
             this.generalShare[i] = tempRandom;
-            if (tempRandom == 0) this.caseType[i] = false;
+            if (tempRandom == 0) this.caseTypeState[i] = false;
             if (maxValue == 0) {
                 for (int j = i + 1; j < share.length - 1; j++) {
                     this.generalShare[j] = 0;
-                    this.caseType[j] = false;
+                    this.caseTypeState[j] = false;
                 }
                 break;
             }
         }
         this.generalShare[3] = maxValue;
-        if (maxValue == 0) this.caseType[3] = false;
+        if (maxValue == 0) this.caseTypeState[3] = false;
         this.includeGeneralShare = false;
     }
 
@@ -65,7 +67,8 @@ public class PasswordGenerator {
         if (checkShareSum) shareSumStatus(shareValue, 'i');
         if ((!checkShareSum) && (!checkScopeStatus)) {
             for (int i = 0; i < generalShare.length; i++) {
-                if (shareValue[i] == 0) {caseType[i] = false;}
+                if (shareValue[i] == 0) {
+                    caseTypeState[i] = false;}
                 generalShare[i] = shareValue[i];
             }
             this.includeGeneralShare = true;
@@ -191,6 +194,19 @@ public class PasswordGenerator {
         return null;
     }
 
+    private char[][] fillCollection() {
+        char[][] collection = new char[4][];
+        collection[0] = new char[]
+        int upper = 0, lower = 0, number = 0, special = 0;
+        for (int i = 33; i < 127; i++) {
+            if (i < 48) {
+                collection[0][upper] = (char) i;
+                upper++;
+            }
+        }
+        return null;
+    }
+
     // print out the password rules of the instance
     @Override
     public String toString() {
@@ -204,22 +220,22 @@ public class PasswordGenerator {
             allRules.append("Length: " + exactPasswordLength + "\n");
         }
         allRules.append("Random share: " + !includeGeneralShare + "\n");
-        if (caseType[0]) {
+        if (caseTypeState[0]) {
             allRules.append(
                 "Upper case: " + generalShare[0] + "%\n"
             );
         }
-        if (caseType[1]) {
+        if (caseTypeState[1]) {
             allRules.append(
                 "Lower case: " + generalShare[1] + "%\n"
             );
         }
-        if (caseType[2]) {
+        if (caseTypeState[2]) {
             allRules.append(
                 "Number case: " + generalShare[2] + "%\n"
             );
         }
-        if (caseType[3]) {
+        if (caseTypeState[3]) {
             allRules.append(
                 "Special case: " + generalShare[3] + "%\n"
             );
