@@ -9,4 +9,7 @@ public class ValueShareException extends RuntimeException {
             "Provided number on index must be from closed interval between " + lowerBound + " and " + upperBound
         );
     }
+    public ValueShareException(String errorMessage) {
+        super(errorMessage);
+    }
 }

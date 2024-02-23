@@ -10,7 +10,7 @@ public class PasswordGenerator {
     private boolean includeGeneralShare;
     private int[] generalShare;
 
-    private boolean checkElementStatus, checkShareSum;
+    private boolean checkScopeStatus, checkShareSum;
 
     // Constant value
     private static final int disregardValue = -1;
@@ -29,7 +29,7 @@ public class PasswordGenerator {
         this.generalShare = new int[] {25, 25, 25, 25};
 
         // Internal additional
-        this.checkElementStatus = true;
+        this.checkScopeStatus = true;
         this.checkShareSum = true;
 
     }
@@ -37,86 +37,97 @@ public class PasswordGenerator {
     public PasswordGenerator(String templateFilePath) {};
 
     // Sets share between types of the characters in password
-    public void setGeneralShare(int regularUpper, int regularLower, int number, int special) throws ValueShareException {
+    public void setRandomShare() {
+        int[] share = new int[4];
+        int maxValue = 100;
+        int tempRandom;
+        for (int i = 0; i < share.length - 1; i++) {
+            tempRandom = (int) (Math.random() * maxValue + 1);
+            maxValue -= tempRandom;
+            this.generalShare[i] = tempRandom;
+            if (tempRandom == 0) this.caseType[i] = false;
+            if (maxValue == 0) {
+                for (int j = i + 1; j < share.length - 1; j++) {
+                    this.generalShare[j] = 0;
+                    this.caseType[j] = false;
+                }
+                break;
+            }
+        }
+        this.generalShare[3] = maxValue;
+        if (maxValue == 0) this.caseType[3] = false;
+        this.includeGeneralShare = false;
+    }
+
+    public void setConstantShare(int regularUpper, int regularLower, int number, int special) throws ValueShareException {
         int[] shareValue = {regularUpper, regularLower, number, special};
-        if (checkElementStatus) {shareElementsStatus(shareValue);}
-        if (checkShareSum) {shareSumStatus(shareValue);}
-        if (!checkShareSum) {
+        if (checkScopeStatus) shareScopeStatus(shareValue, 'i');
+        if (checkShareSum) shareSumStatus(shareValue, 'i');
+        if ((!checkShareSum) && (!checkScopeStatus)) {
             for (int i = 0; i < generalShare.length; i++) {
                 if (shareValue[i] == 0) {caseType[i] = false;}
                 generalShare[i] = shareValue[i];
             }
-            this.checkElementStatus = true;
+            this.includeGeneralShare = true;
+            this.checkScopeStatus = true;
             this.checkShareSum = true;
-        } else {
-            throw new ValueShareException("integers", 100);
         }
     }
 
-    public void setGeneralShare(double regularUpper, double regularLower, double number, double special) throws ValueShareException {
-        if (checkShareSum) {
-            shareSumStatus(regularUpper, regularLower, number, special);
-        }
-        if (checkElementStatus) {
-            shareElementsStatus(regularUpper, regularLower, number, special);
-        }
-        double shareSum = regularUpper + regularLower + number + special;
-        if (!checkShareSum) {
-            double[] decimalRules = {regularUpper, regularLower, number, special};
-            int[] rules = new int[4];
-            for (int i = 0; i < decimalRules.length; i++) {
-                rules[i] = (int) (decimalRules[i] * 100);
-            }
-            setGeneralShare(rules[0], rules[1], rules[2], rules[3]);
-        } else {
-            throw new ValueShareException("decimal", 1);
+    public void setConstantShare(double regularUpper, double regularLower, double number, double special) throws ValueShareException {
+        double[] decimalRules = {regularUpper, regularLower, number, special};
+        int[] rules = decimalPlacesStatus(decimalRules);
+        if (checkShareSum) shareSumStatus(rules, 'd');
+        if (checkScopeStatus) shareScopeStatus(rules, 'd');
+        if ((!checkShareSum) && (!checkScopeStatus)) {
+            setConstantShare(rules[0], rules[1], rules[2], rules[3]);
         }
     }
 
-    public void setGeneralShare(float regularUpper, float regularLower, float number, float special) {
-        shareElementsStatus(regularUpper, regularLower, number, special);
-        shareSumStatus(regularUpper, regularLower, number, special);
-        setGeneralShare(regularUpper, regularLower, number, special);
-    }
-
-    private void shareElementsStatus(int[] numberArray) throws ValueShareException {
+    private void shareScopeStatus(int[] numberArray, char type) throws ValueShareException {
         for (int i : numberArray) {
             if (i < 0 || i > 100) {
-                throw new ValueShareException(0, 100);
+                if (type == 'i') {
+                    throw new ValueShareException(0, 100);
+                } else {
+                    throw new ValueShareException(0, 1);
+                }
             }
         }
+        this.checkScopeStatus = false;
     }
 
-    private void shareElementsStatus(double regularUpper, double regularLower, double number, double special) throws ValueShareException {
-        if ((regularUpper < 0 || regularUpper > 100) ||
-            (regularLower < 0 || regularLower > 100) ||
-            (number < 0 || number > 100) ||
-            (special < 0 || special > 100)) {
-            throw new ValueShareException(0, 1);
-        }
-        this.checkElementStatus = false;
-    }
-
-    private void shareSumStatus(int[] numberArray) throws ValueShareException {
+    private void shareSumStatus(int[] numberArray, char type) throws ValueShareException {
         int sum = 0;
         for (int i = 0; i < numberArray.length; i++) {
             sum += numberArray[i];
         }
-        if (sum != 100) {
-            throw new ValueShareException("integer", 100);
-        }
-    }
-
-    private void shareSumStatus(double regularUpper, double regularLower, double number, double special) throws ValueShareException {
-        double sum = regularUpper + regularLower + number + special;
-        if (sum != 1.0) {
-            throw new ValueShareException("decimal", 1);
-        }
+        if (sum != 100 && type == 'i') throw new ValueShareException("integer", 100);
+        if (sum != 100 && type == 'd') throw new ValueShareException("decimal", 1);
         this.checkShareSum = false;
     }
 
+    private int[] decimalPlacesStatus(double[] numberArray) throws ValueShareException {
+        int tempChecker1, tempChecker2;
+        for (int i = 0; i < numberArray.length; i++) {
+            tempChecker1 = ((int) (numberArray[i] * 100)) * 100000;
+            tempChecker2 = (int) (numberArray[i] * 10000000);
+            if (tempChecker1 != tempChecker2) {
+                throw new ValueShareException(
+                    "The value entered can have a maximum of 2 decimal places\n" +
+                    "* The value provided was " + numberArray[i]
+                );
+            }
+        }
+        int[] rules = new int[4];
+        for (int i = 0; i < numberArray.length; i++) {
+            rules[i] = (int) (numberArray[i] * 100);
+        }
+        return rules;
+    }
+
     // Sets the exact length of the password
-    public void setPasswordLength(int exactPasswordLength) throws ExactValueException {
+    public void setLength(int exactPasswordLength) throws ExactValueException {
         if (exactPasswordLength > 0) {
             isPasswordRange = false;
             this.exactPasswordLength = exactPasswordLength;
@@ -135,7 +146,7 @@ public class PasswordGenerator {
 
 
     // Sets the range of the password
-    public void setPasswordRange(int minCharLength, int maxCharLength) {
+    public void setRange(int minCharLength, int maxCharLength) {
         if (minCharLength > 0 && maxCharLength > 0) {
             this.isPasswordRange = true;
             this.exactPasswordLength = disregardValue;
@@ -143,7 +154,7 @@ public class PasswordGenerator {
                 minMaxRange[0] = minCharLength;
                 minMaxRange[1] = maxCharLength;
             } else if (minCharLength == maxCharLength) {
-                setPasswordLength(minCharLength);
+                setLength(minCharLength);
             } else {
                 minMaxRange[0] = maxCharLength;
                 minMaxRange[1] = minCharLength;
@@ -161,7 +172,7 @@ public class PasswordGenerator {
         }
     }
 
-    public void setPasswordRange(int exactCharLength) throws RangeValueException {
+    public void setRange(int exactCharLength) throws RangeValueException {
         throw new RangeValueException(
                 "Provide second value to set range.\n * To set exact length use .setPasswordLength() method."
         );
@@ -175,17 +186,43 @@ public class PasswordGenerator {
         //
     }
 
+    public String generate() {
+        // ogs
+        return null;
+    }
+
     // print out the password rules of the instance
     @Override
     public String toString() {
         StringBuilder allRules = new StringBuilder("Password rules: \n");
         if (isPasswordRange) {
-            allRules.append("Password range: "
-                + minMaxRange[0] + ", "
+            allRules.append("Range: "
+                + minMaxRange[0] + " - "
                 + minMaxRange[1] + "\n"
             );
         } else {
-            allRules.append("Password length: " + exactPasswordLength);
+            allRules.append("Length: " + exactPasswordLength + "\n");
+        }
+        allRules.append("Random share: " + !includeGeneralShare + "\n");
+        if (caseType[0]) {
+            allRules.append(
+                "Upper case: " + generalShare[0] + "%\n"
+            );
+        }
+        if (caseType[1]) {
+            allRules.append(
+                "Lower case: " + generalShare[1] + "%\n"
+            );
+        }
+        if (caseType[2]) {
+            allRules.append(
+                "Number case: " + generalShare[2] + "%\n"
+            );
+        }
+        if (caseType[3]) {
+            allRules.append(
+                "Special case: " + generalShare[3] + "%\n"
+            );
         }
         return allRules.toString();
     }
