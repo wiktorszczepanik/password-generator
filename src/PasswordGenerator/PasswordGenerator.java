@@ -36,6 +36,7 @@ public class PasswordGenerator {
 
     }
 
+
     public PasswordGenerator(String templateFilePath) {};
 
     // Sets share between types of the characters in password
@@ -190,27 +191,79 @@ public class PasswordGenerator {
     }
 
     public String generate() {
-        // ogs
-        return null;
+        if (!includeGeneralShare) {
+            setRandomShare();
+        }
+        int[][] caseUsage = getCaseUsage();
+        char[][] caseSet = getCaseSet(caseUsage);
+        String password = textCement(caseSet);
+        return password;
     }
 
     private char[][] fillCollection() {
         char[][] collection = new char[4][];
-        collection[0] = new char[]
-        int upper = 0, lower = 0, number = 0, special = 0;
+        char[][] upperLower = fillUpperLower();
+        collection[0] = upperLower[0];
+        collection[1] = upperLower[1];
+        collection[2] = fillNumber();
+        collection[3] = fillSpecial();
+        return collection;
+    }
+
+    private char[] fillSpecial() {
+        char[] special = new char[32];
+        int counter = 0;
         for (int i = 33; i < 127; i++) {
             if (i < 48) {
-                collection[0][upper] = (char) i;
-                upper++;
+                special[counter] = (char) i;
+                counter++;
+            } else if (i > 57 && i < 65) {
+                special[counter] = (char) i;
+                counter++;
+            } else if (i > 90 && i < 97) {
+                special[counter] = (char) i;
+                counter++;
+            } else if (i > 122) {
+                special[counter] = (char) i;
+                counter++;
             }
         }
-        return null;
+        return special;
+    }
+
+    private char[][] fillUpperLower() {
+        char[][] upperLower = new char[2][26];
+        int counter = 0;
+        for (int i = 65; i <= 90; i++) {
+            upperLower[0][counter] = (char) i;
+            upperLower[1][counter] = (char) (upperLower[0][counter] + 32);
+            counter++;
+        }
+        return upperLower;
+    }
+
+    private char[] fillNumber() {
+        char[] number = new char[10];
+        int counter = 0;
+        for (int i = 48; i < 58; i++) {
+            number[counter] = (char) i;
+            counter++;
+        }
+        return number;
+    }
+
+    public void showCaseCollection(String separator) {
+        for (int i = 0; i < charCollection.length; i++) {
+            for (int j = 0; j < charCollection[i].length; j++) {
+                System.out.print(charCollection[i][j]);
+            }
+            System.out.print(separator);
+        }
     }
 
     // print out the password rules of the instance
-    @Override
-    public String toString() {
-        StringBuilder allRules = new StringBuilder("Password rules: \n");
+    public void showRules() {
+        StringBuilder allRules = new StringBuilder("\n");
         if (isPasswordRange) {
             allRules.append("Range: "
                 + minMaxRange[0] + " - "
@@ -240,6 +293,6 @@ public class PasswordGenerator {
                 "Special case: " + generalShare[3] + "%\n"
             );
         }
-        return allRules.toString();
+        System.out.println(allRules.toString());
     }
 }
