@@ -1,4 +1,5 @@
 package PasswordGenerator;
+import static java.lang.Math.*;
 
 public class PasswordGenerator {
 
@@ -45,7 +46,7 @@ public class PasswordGenerator {
         int maxValue = 100;
         int tempRandom;
         for (int i = 0; i < share.length - 1; i++) {
-            tempRandom = (int) (Math.random() * maxValue + 1);
+            tempRandom = (int) (random() * maxValue + 1);
             maxValue -= tempRandom;
             this.generalShare[i] = tempRandom;
             if (tempRandom == 0) this.caseTypeState[i] = false;
@@ -194,10 +195,56 @@ public class PasswordGenerator {
         if (!includeGeneralShare) {
             setRandomShare();
         }
-        int[][] caseUsage = getCaseUsage();
-        char[][] caseSet = getCaseSet(caseUsage);
-        String password = textCement(caseSet);
-        return password;
+        int currentLength;
+        if (isPasswordRange) {
+            currentLength = setCurrentLength();
+        } else {
+            currentLength = this.exactPasswordLength;
+        }
+        int[] caseUsage = getCaseUsage(currentLength);
+        StringBuilder blob = new StringBuilder();
+        int blobLength = 0;
+        int randomChar, randomInsertSpace;
+        for (int i = 0; i < caseUsage.length; i++) {
+            int charSetLength = charCollection[i].length;
+            for (int j = 0; j < caseUsage[i]; j++) {
+                randomChar = (int) (random() * (charSetLength));
+                randomInsertSpace = (int) (random() * (blobLength));
+                blob.insert(randomInsertSpace, charCollection[i][randomChar]);
+                blobLength++;
+            }
+        }
+        return blob.toString();
+    }
+
+    private int setCurrentLength() {
+        return ((int) (random() * ((minMaxRange[1] + 1) - minMaxRange[0]))) + minMaxRange[0];
+    }
+
+    private int[] getCaseUsage(int length) {
+        int[] casePerType = new int[4];
+        double[] caseMantissa = new double[4];
+        for (int i = 0; i < casePerType.length; i++) {
+            double mantissa = (generalShare[i] * 0.01) * length;
+            caseMantissa[i] = mantissa - floor(mantissa);
+            casePerType[i] = (int) (floor(mantissa));
+        }
+        int sum = 0;
+        for (int len : casePerType) {
+            sum += len;
+        }
+        while (sum < length) {
+            int indexOfMax = 0;
+            for (int i = 1; i < caseMantissa.length; i++) {
+                if (caseMantissa[i] > caseMantissa[indexOfMax]) {
+                    indexOfMax = i;
+                }
+            }
+            casePerType[indexOfMax] += 1;
+            caseMantissa[indexOfMax] = 0;
+            sum++;
+        }
+        return casePerType;
     }
 
     private char[][] fillCollection() {
