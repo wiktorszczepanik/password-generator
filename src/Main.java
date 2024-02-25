@@ -17,6 +17,5 @@ public class Main {
         // ^you can also provide char array | also takes 'u', 'l', 'n', 's'
         // ^takes with only first input also
         String testPassword = password.generate();
-        System.out.println(password);
     }
 }
