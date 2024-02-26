@@ -14,9 +14,6 @@ public class PasswordGenerator {
 
     private boolean checkScopeStatus, checkShareSum;
 
-    // Constant value
-    private static final int disregardValue = -1;
-
     public PasswordGenerator() {
 
         // Length / range of exit password
@@ -36,9 +33,6 @@ public class PasswordGenerator {
         this.checkShareSum = true;
 
     }
-
-
-    public PasswordGenerator(String templateFilePath) {};
 
     // Sets share between types of the characters in password
     public void setRandomShare() {
@@ -63,14 +57,16 @@ public class PasswordGenerator {
         this.includeGeneralShare = false;
     }
 
-    public void setConstantShare(int regularUpper, int regularLower, int number, int special) throws ValueShareException {
+    // Sets share between case types
+    public void setConstantShare(int regularUpper, int regularLower, int number, int special) {
         int[] shareValue = {regularUpper, regularLower, number, special};
-        if (checkScopeStatus) shareScopeStatus(shareValue, 'i');
-        if (checkShareSum) shareSumStatus(shareValue, 'i');
+        if (checkScopeStatus) this.checkScopeStatus = Validation.shareScopeStatus(shareValue, 'i');
+        if (checkShareSum) this.checkShareSum = Validation.shareSumStatus(shareValue, 'i');
         if ((!checkShareSum) && (!checkScopeStatus)) {
             for (int i = 0; i < generalShare.length; i++) {
                 if (shareValue[i] == 0) {
-                    caseTypeState[i] = false;}
+                    caseTypeState[i] = false;
+                }
                 generalShare[i] = shareValue[i];
             }
             this.includeGeneralShare = true;
@@ -79,82 +75,84 @@ public class PasswordGenerator {
         }
     }
 
-    public void setConstantShare(double regularUpper, double regularLower, double number, double special) throws ValueShareException {
+    public void setConstantShare(double regularUpper, double regularLower, double number, double special) {
         double[] decimalRules = {regularUpper, regularLower, number, special};
-        int[] rules = decimalPlacesStatus(decimalRules);
-        if (checkShareSum) shareSumStatus(rules, 'd');
-        if (checkScopeStatus) shareScopeStatus(rules, 'd');
+        int[] rules = Validation.decimalPlacesStatus(decimalRules);
+        if (checkShareSum) this.checkShareSum = Validation.shareSumStatus(rules, 'd');
+        if (checkScopeStatus) this.checkScopeStatus = Validation.shareScopeStatus(rules, 'd');
         if ((!checkShareSum) && (!checkScopeStatus)) {
             setConstantShare(rules[0], rules[1], rules[2], rules[3]);
         }
     }
 
-    private void shareScopeStatus(int[] numberArray, char type) throws ValueShareException {
-        for (int i : numberArray) {
-            if (i < 0 || i > 100) {
-                if (type == 'i') {
-                    throw new ValueShareException(0, 100);
-                } else {
-                    throw new ValueShareException(0, 1);
+    private static class Validation {
+
+        private static boolean shareScopeStatus(int[] numberArray, char type) throws ValueShareException {
+            for (int i : numberArray) {
+                if (i < 0 || i > 100) {
+                    if (type == 'i') {
+                        throw new ValueShareException(0, 100);
+                    } else {
+                        throw new ValueShareException(0, 1);
+                    }
                 }
             }
+            return false;
         }
-        this.checkScopeStatus = false;
-    }
 
-    private void shareSumStatus(int[] numberArray, char type) throws ValueShareException {
-        int sum = 0;
-        for (int i = 0; i < numberArray.length; i++) {
-            sum += numberArray[i];
+        private static boolean shareSumStatus(int[] numberArray, char type) throws ValueShareException {
+            int sum = 0;
+            for (int i : numberArray) sum += i;
+            if (sum != 100 && type == 'i') throw new ValueShareException("integer", 100);
+            if (sum != 100 && type == 'd') throw new ValueShareException("decimal", 1);
+            return false;
         }
-        if (sum != 100 && type == 'i') throw new ValueShareException("integer", 100);
-        if (sum != 100 && type == 'd') throw new ValueShareException("decimal", 1);
-        this.checkShareSum = false;
-    }
 
-    private int[] decimalPlacesStatus(double[] numberArray) throws ValueShareException {
-        int tempChecker1, tempChecker2;
-        for (int i = 0; i < numberArray.length; i++) {
-            tempChecker1 = ((int) (numberArray[i] * 100)) * 100000;
-            tempChecker2 = (int) (numberArray[i] * 10000000);
-            if (tempChecker1 != tempChecker2) {
-                throw new ValueShareException(
-                    "The value entered can have a maximum of 2 decimal places\n" +
-                    "* The value provided was " + numberArray[i]
-                );
+        private static int[] decimalPlacesStatus(double[] numberArray) throws ValueShareException {
+            int tempChecker1, tempChecker2;
+            for (int i = 0; i < numberArray.length; i++) {
+                tempChecker1 = ((int) (numberArray[i] * 100)) * 100000;
+                tempChecker2 = (int) (numberArray[i] * 10000000);
+                if (tempChecker1 != tempChecker2) {
+                    throw new ValueShareException(
+                        "The value entered can have a maximum of 2 decimal places\n" +
+                        "* The value provided was " + numberArray[i]
+                    );
+                }
             }
+            int[] rules = new int[4];
+            for (int i = 0; i < numberArray.length; i++) {
+                rules[i] = (int) (numberArray[i] * 100);
+            }
+            return rules;
         }
-        int[] rules = new int[4];
-        for (int i = 0; i < numberArray.length; i++) {
-            rules[i] = (int) (numberArray[i] * 100);
-        }
-        return rules;
+
     }
 
     // Sets the exact length of the password
-    public void setLength(int exactPasswordLength) throws ExactValueException {
+    public void setLength(int exactPasswordLength) {
         if (exactPasswordLength > 0) {
             isPasswordRange = false;
             this.exactPasswordLength = exactPasswordLength;
-            this.minMaxRange[0] = disregardValue;
-            this.minMaxRange[1] = disregardValue;
+            this.minMaxRange[0] = -1;
+            this.minMaxRange[1] = -1;
         } else {
             throw new ExactValueException("Provide value higher than zero.");
         }
     }
 
-    public void setExactCharLength(int minCharLength, int maxCharLength) throws ExactValueException {
+    public void setLength(int minCharLength, int maxCharLength) {
         throw new ExactValueException(
-                "Provide only one vale to set length.\n * To set range use .setPasswordRange() method."
+            "Provide only one vale to set length.\n " +
+            "* To set range use .setPasswordRange() method."
         );
     }
-
 
     // Sets the range of the password
     public void setRange(int minCharLength, int maxCharLength) {
         if (minCharLength > 0 && maxCharLength > 0) {
             this.isPasswordRange = true;
-            this.exactPasswordLength = disregardValue;
+            this.exactPasswordLength = -1;
             if (minCharLength < maxCharLength) {
                 minMaxRange[0] = minCharLength;
                 minMaxRange[1] = maxCharLength;
@@ -177,20 +175,19 @@ public class PasswordGenerator {
         }
     }
 
-    public void setRange(int exactCharLength) throws RangeValueException {
+    public void setRange(int exactCharLength) {
         throw new RangeValueException(
                 "Provide second value to set range.\n * To set exact length use .setPasswordLength() method."
         );
     }
 
-    public void generateTemplateFile(String templateFilePath) {
-        //
+    // Sets rules same as at the beginning of the instance
+    public void setDefaultRules() {
+        setConstantShare(25, 25, 25, 25);
+        setLength(30);
     }
 
-    public void readTemplateFile(String templateFilePath) {
-        //
-    }
-
+    // Generates password based on set rules or default
     public String generate() {
         if (!includeGeneralShare) {
             setRandomShare();
@@ -249,56 +246,67 @@ public class PasswordGenerator {
 
     private char[][] fillCollection() {
         char[][] collection = new char[4][];
-        char[][] upperLower = fillUpperLower();
+        char[][] upperLower = Collection.fillUpperLower();
         collection[0] = upperLower[0];
         collection[1] = upperLower[1];
-        collection[2] = fillNumber();
-        collection[3] = fillSpecial();
+        collection[2] = Collection.fillNumber();
+        collection[3] = Collection.fillSpecial();
         return collection;
     }
 
-    private char[] fillSpecial() {
-        char[] special = new char[32];
-        int counter = 0;
-        for (int i = 33; i < 127; i++) {
-            if (i < 48) {
-                special[counter] = (char) i;
-                counter++;
-            } else if (i > 57 && i < 65) {
-                special[counter] = (char) i;
-                counter++;
-            } else if (i > 90 && i < 97) {
-                special[counter] = (char) i;
-                counter++;
-            } else if (i > 122) {
-                special[counter] = (char) i;
+    private static class Collection {
+
+        private static char[] fillSpecial() {
+            char[] special = new char[32];
+            int counter = 0;
+            for (int i = 33; i < 127; i++) {
+                if (i < 48) {
+                    special[counter] = (char) i;
+                    counter++;
+                } else if (i > 57 && i < 65) {
+                    special[counter] = (char) i;
+                    counter++;
+                } else if (i > 90 && i < 97) {
+                    special[counter] = (char) i;
+                    counter++;
+                } else if (i > 122) {
+                    special[counter] = (char) i;
+                    counter++;
+                }
+            }
+            return special;
+        }
+
+        private static char[][] fillUpperLower() {
+            char[][] upperLower = new char[2][26];
+            int counter = 0;
+            for (int i = 65; i <= 90; i++) {
+                upperLower[0][counter] = (char) i;
+                upperLower[1][counter] = (char) (upperLower[0][counter] + 32);
                 counter++;
             }
+            return upperLower;
         }
-        return special;
+
+        private static char[] fillNumber() {
+            char[] number = new char[10];
+            int counter = 0;
+            for (int i = 48; i < 58; i++) {
+                number[counter] = (char) i;
+                counter++;
+            }
+            return number;
+        }
+
     }
 
-    private char[][] fillUpperLower() {
-        char[][] upperLower = new char[2][26];
-        int counter = 0;
-        for (int i = 65; i <= 90; i++) {
-            upperLower[0][counter] = (char) i;
-            upperLower[1][counter] = (char) (upperLower[0][counter] + 32);
-            counter++;
-        }
-        return upperLower;
-    }
+    // Include selected characters
+    public void include() {}
 
-    private char[] fillNumber() {
-        char[] number = new char[10];
-        int counter = 0;
-        for (int i = 48; i < 58; i++) {
-            number[counter] = (char) i;
-            counter++;
-        }
-        return number;
-    }
+    // Exclude selected characters
+    public void exclude() {}
 
+    // Print out characters that are used in instance
     public void showCaseCollection(String separator) {
         for (int i = 0; i < charCollection.length; i++) {
             for (int j = 0; j < charCollection[i].length; j++) {
@@ -308,7 +316,7 @@ public class PasswordGenerator {
         }
     }
 
-    // print out the password rules of the instance
+    // Print out the password rules of the instance
     public void showRules() {
         StringBuilder allRules = new StringBuilder("\n");
         if (isPasswordRange) {
@@ -342,4 +350,5 @@ public class PasswordGenerator {
         }
         System.out.println(allRules.toString());
     }
+
 }
