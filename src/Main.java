@@ -3,9 +3,9 @@ import PasswordGenerator.*;
 public class Main {
     public static void main(String[] args) {
         PasswordGenerator password = new PasswordGenerator();
-        password.setLength(30);
+        password.setConstantShare(25, 20 , 30, 25);
+        password.setLength(12);
         password.setRange(1, 2);
-        password.setConstantShare(25, 25 , 25, 25);
         password.setRandomShare();
         String testPassword = password.generate();
         password.setDefaultRules();

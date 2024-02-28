@@ -87,7 +87,7 @@ public class PasswordGenerator {
 
     private static class Validation {
 
-        private static boolean shareScopeStatus(int[] numberArray, char type) throws ValueShareException {
+        private static boolean shareScopeStatus(int[] numberArray, char type) {
             for (int i : numberArray) {
                 if (i < 0 || i > 100) {
                     if (type == 'i') {
@@ -100,7 +100,7 @@ public class PasswordGenerator {
             return false;
         }
 
-        private static boolean shareSumStatus(int[] numberArray, char type) throws ValueShareException {
+        private static boolean shareSumStatus(int[] numberArray, char type) {
             int sum = 0;
             for (int i : numberArray) sum += i;
             if (sum != 100 && type == 'i') throw new ValueShareException("integer", 100);
@@ -108,7 +108,7 @@ public class PasswordGenerator {
             return false;
         }
 
-        private static int[] decimalPlacesStatus(double[] numberArray) throws ValueShareException {
+        private static int[] decimalPlacesStatus(double[] numberArray) {
             int tempChecker1, tempChecker2;
             for (int i = 0; i < numberArray.length; i++) {
                 tempChecker1 = ((int) (numberArray[i] * 100)) * 100000;
@@ -183,8 +183,8 @@ public class PasswordGenerator {
 
     // Sets rules same as at the beginning of the instance
     public void setDefaultRules() {
-        setConstantShare(25, 25, 25, 25);
         setLength(30);
+        setConstantShare(25, 25, 25, 25);
     }
 
     // Generates password based on set rules or default
@@ -301,10 +301,102 @@ public class PasswordGenerator {
     }
 
     // Include selected characters
-    public void include() {}
+    public void include(char character, int type, boolean allowDuplicate) {
+        if (!allowDuplicate) Size.checkCharDupliacate(character, charCollection[type - 1]);
+        if (type >= 1 && type <= 4) {
+            charCollection[type - 1] = Size.addCharacter(character, charCollection[type - 1]);
+        } else {
+            throw new IncludeExcludeException(
+                "Provided number for collection type do not exist" +
+                "* Available options are: 1, 2, 3, 4"
+            );
+        }
+    }
+
+    public void include(char character, String type, boolean allowDuplicate) {
+        if (type == "upper") {
+            include(character, 1, allowDuplicate);
+        } else if (type == "lower") {
+            include(character, 2, allowDuplicate);
+        } else if (type == "number") {
+            include(character, 3, allowDuplicate);
+        } else if (type == "special") {
+            include(character, 4, allowDuplicate);
+        } else {
+            throw new IncludeExcludeException(
+                "Provided String for collection type do not exist" +
+                "*Available options are: upper, lower, number, special "
+            );
+        }
+    }
+
+    public void include(char[] list, int type, boolean allowDuplicate) {
+        if (!allowDuplicate) Size.checkListDupliacate(list, charCollection[type - 1]);
+        if (type >= 1 && type <= 4) {
+            charCollection[type - 1] = Size.addCharList(list, charCollection[type - 1]);
+        } else {
+            throw new IncludeExcludeException(
+                "Provided number for collection type do not exist" +
+                "* Available options are: 1, 2, 3, 4"
+            );
+        }
+    }
+
+    public void include(char[] list, String type, boolean allowDuplicate) {
+        if (type == "upper") {
+            include(list, 1, allowDuplicate);
+        } else if (type == "lower") {
+            include(list, 2, allowDuplicate);
+        } else if (type == "number") {
+            include(list, 3, allowDuplicate);
+        } else if (type == "special") {
+            include(list, 4, allowDuplicate);
+        } else {
+            throw new IncludeExcludeException(
+                "Provided String for collection type do not exist" +
+                "*Available options are: upper, lower, number, special "
+            );
+        }
+    }
 
     // Exclude selected characters
-    public void exclude() {}
+    public void exclude(char character, String type) {}
+
+    public void exclude(char[] characters, String type) {}
+
+    private static class Size {
+
+        private static void checkCharDuplicate(char character, char[] collection) {
+            for (int i = 0; i < collection.length; i++) {
+                if (character == collection[i]) {
+                    throw new IncludeExcludeException(
+                        "Provided character already exist in case collection."
+                    ); // Tu skonczylem !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                }
+            }
+        }
+
+        private static char[] addCharacter(char character, char[] collection) {
+            char[] extendedCollection = new char[collection.length + 1];
+            for (int i = 0; i < extendedCollection.length - 1; i++) {
+                extendedCollection[i] = collection[i];
+            }
+            extendedCollection[extendedCollection.length - 1] = character;
+            return extendedCollection;
+        }
+        private static char[] addCharList(char[] list, char[] collection) {
+            char[] extendCollection = new char[collection.length + list.length];
+            int counter = 0;
+            for (int i = 0; i < collection.length; i++) {
+                extendCollection[i] = collection[i];
+                counter++;
+            }
+            for (int i = counter; i < extendCollection.length; i++) {
+                extendCollection[i] = list[i];
+            }
+            return extendCollection;
+        }
+    }
 
     // Print out characters that are used in instance
     public void showCaseCollection(String separator) {
