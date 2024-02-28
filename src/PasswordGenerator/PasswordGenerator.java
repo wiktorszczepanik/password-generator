@@ -302,7 +302,7 @@ public class PasswordGenerator {
 
     // Include selected characters
     public void include(char character, int type, boolean allowDuplicate) {
-        if (!allowDuplicate) Size.checkCharDupliacate(character, charCollection[type - 1]);
+        if (!allowDuplicate) Size.checkCharDuplicate(character, charCollection[type - 1]);
         if (type >= 1 && type <= 4) {
             charCollection[type - 1] = Size.addCharacter(character, charCollection[type - 1]);
         } else {
@@ -331,7 +331,7 @@ public class PasswordGenerator {
     }
 
     public void include(char[] list, int type, boolean allowDuplicate) {
-        if (!allowDuplicate) Size.checkListDupliacate(list, charCollection[type - 1]);
+        if (!allowDuplicate) Size.checkListDuplicate(list, charCollection[type - 1]);
         if (type >= 1 && type <= 4) {
             charCollection[type - 1] = Size.addCharList(list, charCollection[type - 1]);
         } else {
@@ -360,9 +360,33 @@ public class PasswordGenerator {
     }
 
     // Exclude selected characters
-    public void exclude(char character, String type) {}
+    public void exclude(char character, int type, boolean allowNotExisting) {
+        if (!allowNotExisting) Size.checkExisting(character, charCollection[type - 1]);
+        if (type >= 1 && type <= 4) {
 
-    public void exclude(char[] characters, String type) {}
+        }
+    }
+
+    public void exclude(char character, String type, boolean allowNotExisting) {
+        if (type == "upper") {
+            exclude(character, 1, allowNotExisting);
+        } else if (type == "lower") {
+            exclude(character, 2, allowNotExisting);
+        } else if (type == "number") {
+            exclude(character, 3, allowNotExisting);
+        } else if (type == "special") {
+            exclude(character, 4, allowNotExisting);
+        } else {
+            throw new IncludeExcludeException(
+                "Provided String for collection type do not exist" +
+                "*Available options are: upper, lower, number, special "
+            );
+        }
+    }
+
+    public void exclude(char[] list, int type, boolean allowNotExisting) {}
+
+    public void exclude(char[] list, String type, boolean allowNotExisting) {}
 
     private static class Size {
 
@@ -371,7 +395,19 @@ public class PasswordGenerator {
                 if (character == collection[i]) {
                     throw new IncludeExcludeException(
                         "Provided character already exist in case collection."
-                    ); // Tu skonczylem !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    );
+                }
+            }
+        }
+
+        private static void checkListDuplicate(char[] characters, char[] collection) {
+            for (int i = 0; i < characters.length; i++) {
+                for (int j = 0; j < collection.length; j++) {
+                    if (characters[i] == collection[j]) {
+                        throw new IncludeExcludeException(
+                            "Provided character in array already exist in case collection."
+                        );
+                    }
                 }
             }
         }
@@ -384,6 +420,7 @@ public class PasswordGenerator {
             extendedCollection[extendedCollection.length - 1] = character;
             return extendedCollection;
         }
+
         private static char[] addCharList(char[] list, char[] collection) {
             char[] extendCollection = new char[collection.length + list.length];
             int counter = 0;
@@ -391,11 +428,50 @@ public class PasswordGenerator {
                 extendCollection[i] = collection[i];
                 counter++;
             }
-            for (int i = counter; i < extendCollection.length; i++) {
-                extendCollection[i] = list[i];
+            for (int i = 0; i < list.length; i++) {
+                extendCollection[counter] = list[i];
+                counter++;
             }
             return extendCollection;
         }
+
+        private static void checkExisting(char character, char[] collection) {
+            boolean exist = false;
+            for (char collCase : collection) {
+                if (collCase == character) {
+                    exist = true;
+                    break;
+                }
+            }
+            if (!exist) throw new IncludeExcludeException(
+                "Provided character do not exits in collection"
+            );
+        }
+
+        private static void checkExisting(char[] character, char[] collection) {
+            boolean exist = false;
+            for (int i = 0; i < collection.length; i++) {
+                for (int j = 0; j < character.length; j++) {
+                    if (collection[i] == character[j]) {
+                        exist = true;
+                        break;
+                    }
+                }
+            }
+            if (!exist) throw new IncludeExcludeException(
+                "Provided character do not exits in collection"
+            );
+        }
+
+        private static char[] removeCharacter(char character, char[] collection) {
+            char[] newCollection = new char[collection.length - 1];
+            for (int i = 0; i < collection.length; i++) {
+                if (collection[i] != character) {
+                    newCollection[i] = collection[i];
+                } // tu skonczone...
+            }
+        }
+
     }
 
     // Print out characters that are used in instance

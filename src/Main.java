@@ -9,9 +9,11 @@ public class Main {
         password.setRandomShare();
         String testPassword = password.generate();
         password.setDefaultRules();
+//        password.showRules();
+        password.include('c', "special", false); // else are "upper", "lower", "number", "special"
+        char[] additional = {'1', '2', '3', '4'};
+        password.include(additional, "upper", true); // else are "upper", "lower", "number", "special"
         password.showCaseCollection("\t");
-        password.showRules();
-        // password.include(" ", "special"); // else are "upper", "lower", "number", "special"
         // ^you can also provide char array | also takes 'u', 'l', 'n', 's'
         // ^takes with only first input also
         // password.exclude(" ", "special"); // else are "upper", "lower", "number", "special"
