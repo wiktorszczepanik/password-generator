@@ -1,4 +1,6 @@
 package PasswordGenerator;
+import java.util.ArrayList;
+
 import static java.lang.Math.*;
 
 public class PasswordGenerator {
@@ -314,20 +316,7 @@ public class PasswordGenerator {
     }
 
     public void include(char character, String type, boolean allowDuplicate) {
-        if (type == "upper") {
-            include(character, 1, allowDuplicate);
-        } else if (type == "lower") {
-            include(character, 2, allowDuplicate);
-        } else if (type == "number") {
-            include(character, 3, allowDuplicate);
-        } else if (type == "special") {
-            include(character, 4, allowDuplicate);
-        } else {
-            throw new IncludeExcludeException(
-                "Provided String for collection type do not exist" +
-                "*Available options are: upper, lower, number, special "
-            );
-        }
+        move(character, type, allowDuplicate, 'i');
     }
 
     public void include(char[] list, int type, boolean allowDuplicate) {
@@ -343,52 +332,141 @@ public class PasswordGenerator {
     }
 
     public void include(char[] list, String type, boolean allowDuplicate) {
-        if (type == "upper") {
-            include(list, 1, allowDuplicate);
-        } else if (type == "lower") {
-            include(list, 2, allowDuplicate);
-        } else if (type == "number") {
-            include(list, 3, allowDuplicate);
-        } else if (type == "special") {
-            include(list, 4, allowDuplicate);
-        } else {
-            throw new IncludeExcludeException(
-                "Provided String for collection type do not exist" +
-                "*Available options are: upper, lower, number, special "
-            );
-        }
+        move(list, type, allowDuplicate, 'i');
     }
 
     // Exclude selected characters
     public void exclude(char character, int type, boolean allowNotExisting) {
-        if (!allowNotExisting) Size.checkExisting(character, charCollection[type - 1]);
+        int innerArray = type - 1;
+        if (!allowNotExisting) Size.checkExisting(character, charCollection[innerArray]);
         if (type >= 1 && type <= 4) {
-
-        }
-    }
-
-    public void exclude(char character, String type, boolean allowNotExisting) {
-        if (type == "upper") {
-            exclude(character, 1, allowNotExisting);
-        } else if (type == "lower") {
-            exclude(character, 2, allowNotExisting);
-        } else if (type == "number") {
-            exclude(character, 3, allowNotExisting);
-        } else if (type == "special") {
-            exclude(character, 4, allowNotExisting);
+            int[] position = Size.checkPosition(character, charCollection[innerArray]);
+            charCollection[innerArray] = Size.finalExclude(position, charCollection[innerArray]);
         } else {
             throw new IncludeExcludeException(
-                "Provided String for collection type do not exist" +
-                "*Available options are: upper, lower, number, special "
+                "Provided number for collection type do not exist" +
+                "* Available options are: 1, 2, 3, 4"
             );
         }
     }
 
-    public void exclude(char[] list, int type, boolean allowNotExisting) {}
+    public void exclude(char character, String type, boolean allowNotExisting) {
+        move(character, type, allowNotExisting, 'e');
+    }
 
-    public void exclude(char[] list, String type, boolean allowNotExisting) {}
+    public void exclude(char[] list, int type, boolean allowNotExisting) {
+        int innerArray = type - 1;
+        if (!allowNotExisting) Size.checkExisting(list, charCollection[innerArray]);
+        if (type >= 1 && type <= 4) {
+            int[] position = Size.checkPosition(list, charCollection[innerArray]);
+            charCollection[innerArray] = Size.finalExclude(position, charCollection[innerArray]);
+        } else {
+            throw new IncludeExcludeException(
+                    "Provided number for collection type do not exist" +
+                            "* Available options are: 1, 2, 3, 4"
+            );
+        }
+    }
+
+    public void exclude(char[] list, String type, boolean allowNotExisting) {
+        move(list, type, allowNotExisting, 'e');
+    }
+
+    private void move(char character, String type, boolean state, char action) {
+        switch (type) {
+            case "upper":
+                if (action == 'i') include(character, 1, state);
+                if (action == 'e') exclude(character, 1, state);
+                break;
+            case "lower":
+                if (action == 'i') include(character, 2, state);
+                if (action == 'e') exclude(character, 2, state);
+                break;
+            case "number":
+                if (action == 'i') include(character, 3, state);
+                if (action == 'e') exclude(character, 3, state);
+                break;
+            case "special":
+                if (action == 'i') include(character, 4, state);
+                if (action == 'e') exclude(character, 4, state);
+                break;
+            default:
+                throw new IncludeExcludeException(
+                    "Provided String for collection type do not exist" +
+                    "*Available options are: upper, lower, number, special "
+                );
+        }
+    }
+
+    private void move(char[] list, String type, boolean state, char action) {
+        switch (type) {
+            case "upper":
+                if (action == 'i') include(list, 1, state);
+                if (action == 'e') exclude(list, 1, state);
+                break;
+            case "lower":
+                if (action == 'i') include(list, 2, state);
+                if (action == 'e') exclude(list, 2, state);
+                break;
+            case "number":
+                if (action == 'i') include(list, 3, state);
+                if (action == 'e') exclude(list, 3, state);
+                break;
+            case "special":
+                if (action == 'i') include(list, 4, state);
+                if (action == 'e') exclude(list, 4, state);
+                break;
+            default:
+                throw new IncludeExcludeException(
+                    "Provided String for collection type do not exist" +
+                    "*Available options are: upper, lower, number, special "
+                );
+        }
+    }
+
 
     private static class Size {
+        
+        private static char[] finalExclude(int[] position, char[] collection) {
+            char[] newCollection = new char[collection.length - position.length];
+            int counter = 0;
+            boolean add = true;
+            for (int i = 0; i < collection.length; i++) {
+                add = true;
+                for (int j = 0; j < position.length; j++) {
+                    if (collection[i] == position[j]) {
+                        add = false;
+                    }
+                }
+                if (add) newCollection[i] = collection[i];
+            }
+            return newCollection;
+        }
+
+        private static int[] checkPosition(char character, char[] collection) {
+            ArrayList<Integer> position = new ArrayList<Integer>();
+            for (int i = 0; i < collection.length; i++) {
+                if (character == collection[i]) {
+                    position.add(i);
+                }
+            }
+            int[] array = position.stream().mapToInt(i -> i).toArray();
+            return array;
+        }
+
+        private static int[] checkPosition(char[] list, char[] collection) {
+            ArrayList<Integer> position = new ArrayList<Integer>();
+            for (int i = 0; i < collection.length; i++) {
+                for (int j = 0; j < list.length; j++) {
+                    if (list[j] == collection[i]) {
+                        position.add(i);
+                        break;
+                    }
+                }
+            }
+            int[] array = position.stream().mapToInt(i -> i).toArray();
+            return array;
+        }
 
         private static void checkCharDuplicate(char character, char[] collection) {
             for (int i = 0; i < collection.length; i++) {
@@ -461,15 +539,6 @@ public class PasswordGenerator {
             if (!exist) throw new IncludeExcludeException(
                 "Provided character do not exits in collection"
             );
-        }
-
-        private static char[] removeCharacter(char character, char[] collection) {
-            char[] newCollection = new char[collection.length - 1];
-            for (int i = 0; i < collection.length; i++) {
-                if (collection[i] != character) {
-                    newCollection[i] = collection[i];
-                } // tu skonczone...
-            }
         }
 
     }
