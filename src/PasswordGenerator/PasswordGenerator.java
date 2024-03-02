@@ -303,6 +303,10 @@ public class PasswordGenerator {
     }
 
     // Include selected characters
+    public void include(char character, int type) {
+        include(character, type, false);
+    }
+
     public void include(char character, int type, boolean allowDuplicate) {
         if (!allowDuplicate) Size.checkCharDuplicate(character, charCollection[type - 1]);
         if (type >= 1 && type <= 4) {
@@ -315,8 +319,16 @@ public class PasswordGenerator {
         }
     }
 
+    public void include(char character, String type) {
+        include(character, type, false);
+    }
+
     public void include(char character, String type, boolean allowDuplicate) {
-        move(character, type, allowDuplicate, 'i');
+        move(character, type, allowDuplicate, 'i', true);
+    }
+
+    public void include(char[] list, int type) {
+        include(list, type, false);
     }
 
     public void include(char[] list, int type, boolean allowDuplicate) {
@@ -331,11 +343,19 @@ public class PasswordGenerator {
         }
     }
 
+    public void include(char[] list, String type) {
+        include(list, type, false);
+    }
+
     public void include(char[] list, String type, boolean allowDuplicate) {
-        move(list, type, allowDuplicate, 'i');
+        move(list, type, allowDuplicate, 'i', false);
     }
 
     // Exclude selected characters
+    public void exclude(char character, int type) {
+        exclude(character, type, false);
+    }
+
     public void exclude(char character, int type, boolean allowNotExisting) {
         int innerArray = type - 1;
         if (!allowNotExisting) Size.checkExisting(character, charCollection[innerArray]);
@@ -350,8 +370,16 @@ public class PasswordGenerator {
         }
     }
 
+    public void exclude(char character, String type) {
+        exclude(character, type, false);
+    }
+
     public void exclude(char character, String type, boolean allowNotExisting) {
-        move(character, type, allowNotExisting, 'e');
+        move(character, type, allowNotExisting, 'e', true);
+    }
+
+    public void exclude(char[] list, int type) {
+        exclude(list, type, false);
     }
 
     public void exclude(char[] list, int type, boolean allowNotExisting) {
@@ -368,27 +396,56 @@ public class PasswordGenerator {
         }
     }
 
+    public void exclude(char[] list, String type) {
+        exclude(list, type, false);
+    }
+
     public void exclude(char[] list, String type, boolean allowNotExisting) {
-        move(list, type, allowNotExisting, 'e');
+        move(list, type, allowNotExisting, 'e', false);
     }
 
-    private void move(char character, String type, boolean state, char action) {
+    private void move(char character, String type, boolean state, char action, boolean single) {
+        char[] oneItem = {character};
+        move(oneItem, type, state, action, single);
+    }
+
+    private void move(char[] list, String type, boolean state, char action, boolean single) {
         switch (type) {
             case "upper":
-                if (action == 'i') include(character, 1, state);
-                if (action == 'e') exclude(character, 1, state);
+                if (single) {
+                    if (action == 'i') include(list[0], 1, state);
+                    if (action == 'e') exclude(list[0], 1, state);
+                } else {
+                    if (action == 'i') include(list, 1, state);
+                    if (action == 'e') exclude(list, 1, state);
+                }
                 break;
             case "lower":
-                if (action == 'i') include(character, 2, state);
-                if (action == 'e') exclude(character, 2, state);
+                if (single) {
+                    if (action == 'i') include(list[0], 2, state);
+                    if (action == 'e') exclude(list[0], 2, state);
+                } else {
+                    if (action == 'i') include(list, 2, state);
+                    if (action == 'e') exclude(list, 2, state);
+                }
                 break;
             case "number":
-                if (action == 'i') include(character, 3, state);
-                if (action == 'e') exclude(character, 3, state);
+                if (single) {
+                    if (action == 'i') include(list[0], 3, state);
+                    if (action == 'e') exclude(list[0], 3, state);
+                } else {
+                    if (action == 'i') include(list, 3, state);
+                    if (action == 'e') exclude(list, 3, state);
+                }
                 break;
             case "special":
-                if (action == 'i') include(character, 4, state);
-                if (action == 'e') exclude(character, 4, state);
+                if (single) {
+                    if (action == 'i') include(list[0], 4, state);
+                    if (action == 'e') exclude(list[0], 4, state);
+                } else {
+                    if (action == 'i') include(list, 4, state);
+                    if (action == 'e') exclude(list, 4, state);
+                }
                 break;
             default:
                 throw new IncludeExcludeException(
@@ -397,48 +454,39 @@ public class PasswordGenerator {
                 );
         }
     }
-
-    private void move(char[] list, String type, boolean state, char action) {
-        switch (type) {
-            case "upper":
-                if (action == 'i') include(list, 1, state);
-                if (action == 'e') exclude(list, 1, state);
-                break;
-            case "lower":
-                if (action == 'i') include(list, 2, state);
-                if (action == 'e') exclude(list, 2, state);
-                break;
-            case "number":
-                if (action == 'i') include(list, 3, state);
-                if (action == 'e') exclude(list, 3, state);
-                break;
-            case "special":
-                if (action == 'i') include(list, 4, state);
-                if (action == 'e') exclude(list, 4, state);
-                break;
-            default:
-                throw new IncludeExcludeException(
-                    "Provided String for collection type do not exist" +
-                    "*Available options are: upper, lower, number, special "
-                );
-        }
-    }
-
 
     private static class Size {
         
         private static char[] finalExclude(int[] position, char[] collection) {
+            if (position.length == 1) return finalOneCharExclude(position[0], collection);
+            else return finalListCharExclude(position, collection);
+        }
+
+        private static char[] finalOneCharExclude(int position, char[] collection) {
+            char[] newCollection = new char[collection.length - 1];
+            int counter = 0;
+            for (int i = 0; i < collection.length; i++) {
+                if (i != position) {
+                    newCollection[counter] = collection[i];
+                    counter++;
+                }
+            }
+            return newCollection;
+        }
+
+        private static char[] finalListCharExclude(int[] position, char[] collection) {
             char[] newCollection = new char[collection.length - position.length];
             int counter = 0;
-            boolean add = true;
+            boolean add;
             for (int i = 0; i < collection.length; i++) {
                 add = true;
                 for (int j = 0; j < position.length; j++) {
-                    if (collection[i] == position[j]) {
-                        add = false;
-                    }
+                    if (i == position[j]) add = false;
                 }
-                if (add) newCollection[i] = collection[i];
+                if (add) {
+                    newCollection[counter] = collection[i];
+                    counter++;
+                }
             }
             return newCollection;
         }
