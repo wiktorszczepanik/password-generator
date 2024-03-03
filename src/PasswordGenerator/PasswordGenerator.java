@@ -1,6 +1,11 @@
 package PasswordGenerator;
-import java.util.ArrayList;
 
+import PasswordGenerator.PasswordExceptions.ExactValueException;
+import PasswordGenerator.PasswordExceptions.IncludeExcludeException;
+import PasswordGenerator.PasswordExceptions.ValueShareException;
+import PasswordGenerator.PasswordExceptions.RangeValueException;
+
+import java.util.ArrayList;
 import static java.lang.Math.*;
 
 public class PasswordGenerator {
@@ -189,6 +194,10 @@ public class PasswordGenerator {
         setConstantShare(25, 25, 25, 25);
     }
 
+    public void setDefaultCollection() {
+        this.charCollection = fillCollection();
+    }
+
     // Generates password based on set rules or default
     public String generate() {
         if (!includeGeneralShare) {
@@ -303,6 +312,19 @@ public class PasswordGenerator {
     }
 
     // Include selected characters
+
+    public void include(char character) {
+        group(character, 'i');
+    }
+
+    public void include(char[] list) {
+        group(list, 'i', false);
+    }
+
+    public void include(char[] list, boolean disregardCheck) {
+        group(list, 'i', disregardCheck);
+    }
+
     public void include(char character, int type) {
         include(character, type, false);
     }
@@ -352,6 +374,19 @@ public class PasswordGenerator {
     }
 
     // Exclude selected characters
+
+    public void exclude(char character) {
+        group(character, 'e');
+    }
+
+    public void exclude(char[] list) {
+        group(list, 'e', false);
+    }
+
+    public void exclude(char[] list, boolean disregardCheck) {
+        group(list, 'e', disregardCheck);
+    }
+
     public void exclude(char character, int type) {
         exclude(character, type, false);
     }
@@ -402,6 +437,48 @@ public class PasswordGenerator {
 
     public void exclude(char[] list, String type, boolean allowNotExisting) {
         move(list, type, allowNotExisting, 'e', false);
+    }
+
+    private void group(char character, char operation) {
+        if (character > 64 && character < 91) {
+            if (operation == 'i') include(character, 1);
+            else exclude(character, 1);
+        } else if (character > 96 && character < 123) {
+            if (operation == 'i') include(character, 2);
+            else exclude(character, 2);
+        } else if (character > 47 && character < 58) {
+            if (operation == 'i') include(character, 3);
+            else exclude(character, 3);
+        } else {
+            if (operation == 'i') include(character, 4);
+            else exclude(character, 4);
+        }
+    }
+
+    private void group(char[] list, char operation, boolean disregardCheck) {
+        char character = list[0];
+        int type;
+        if (character > 64 && character < 91) type = 1;
+        else if (character > 96 && character < 123) type = 2;
+        else if (character > 47 && character < 58) type = 3;
+        else type = 4;
+        if (!disregardCheck) {
+            boolean state;
+            for (int i = 1; i < list.length; i++) {
+                int tempChar = list[i];
+                state = false;
+                if (type == 1 && (tempChar > 64 && tempChar < 91)) state = true;
+                else if (type == 2 && (tempChar > 96 && tempChar < 123)) state = true;
+                else if (type == 3 && (tempChar > 47 && tempChar < 58)) state = true;
+                else if (type == 4) state = true;
+                if (!state) throw new IncludeExcludeException(
+                        "Char array must be consistent \n " +
+                                "* It should not contains different case types"
+                );
+            }
+        }
+        if (operation == 'i') include(list, type);
+        else exclude(list, type);
     }
 
     private void move(char character, String type, boolean state, char action, boolean single) {

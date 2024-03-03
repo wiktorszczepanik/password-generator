@@ -6,11 +6,12 @@ public class Main {
         password.setRandomShare();
         password.showCaseCollection("\t");
         System.out.println("");
-        char[] additional = {'"'};
-        password.exclude('"', 4);
+        char[] additional = {'"', '&'};
+        password.exclude(additional, 2);
         password.showCaseCollection("\t");
-        // Add auto group
-        // move exception files to other folder
+        // Add auto group in: include, exclude - done
+        // test auto group
+        // Add random share but set minimum value in type
         // clean code
         // Add readme.md
     }

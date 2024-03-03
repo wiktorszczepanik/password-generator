@@ -1,4 +1,4 @@
-package PasswordGenerator;
+package PasswordGenerator.PasswordExceptions;
 
 public class ValueShareException extends RuntimeException {
     public ValueShareException(String type, int addUpTo) {
