@@ -43,11 +43,30 @@ public class PasswordGenerator {
 
     // Sets share between types of the characters in password
     public void setRandomShare() {
+        setRandomShare(0, true);
+    }
+
+    public void setRandomShare(int minVal) {
+        if (minVal > 25) throw new ValueShareException('m', "25");
+        setRandomShare(minVal, false);
+    }
+
+    public void setRandomShare(double minVal) {
+        if (minVal > 0.25) throw new ValueShareException('m', "0.25");
+        int newMinVal = Validation.decimalPlacesStatus(minVal);
+        setRandomShare(newMinVal, false);
+    }
+
+    private void setRandomShare(int minVal, boolean fullRandom) {
         int[] share = new int[4];
         int maxValue = 100;
         int tempRandom;
         for (int i = 0; i < share.length - 1; i++) {
-            tempRandom = (int) (random() * maxValue + 1);
+            if (fullRandom) tempRandom = (int) (random() * (maxValue + 1));
+            else {
+                tempRandom = maxValue - ((4-i) * minVal) + 1;
+                tempRandom = (int) (minVal + (random() * tempRandom));
+            }
             maxValue -= tempRandom;
             this.generalShare[i] = tempRandom;
             if (tempRandom == 0) this.caseTypeState[i] = false;
@@ -62,6 +81,42 @@ public class PasswordGenerator {
         this.generalShare[3] = maxValue;
         if (maxValue == 0) this.caseTypeState[3] = false;
         this.includeGeneralShare = false;
+    }
+
+    public void setRandomShare(double minUpper, double minLower, double minNumber, double minSpecial) {
+        double[] decimalArray = {minUpper, minLower, minNumber, minSpecial};
+        int[] newMinVal = Validation.decimalPlacesStatus(decimalArray);
+        setRandomShare(newMinVal[0], newMinVal[1], newMinVal[2], newMinVal[3], 'd');
+    }
+
+    public void setRandomShare(int minUpper, int minLower, int minNumber, int minSpecial) {
+        setRandomShare(minUpper, minLower, minNumber, minSpecial, 'i');
+    }
+
+    public void setRandomShare(int minUpper, int minLower, int minNumber, int minSpecial, char type) {
+        int[] minVal = {minUpper, minLower, minNumber, minSpecial};
+        int sum = 0;
+        for (int val : minVal) sum += val;
+        String higerThan = "100";
+        if (sum > 100) {
+            if (type == 'd') higerThan = "1.0";
+            throw new ValueShareException(
+                "Sum of provided minimum values cannot be higher than " + higerThan
+            );
+        }
+        int leftValue = 100 - sum;
+        int tempRandom;
+        for (int i = 0; i < minVal.length - 1; i++) {
+            tempRandom = (int) (random() * (leftValue + 1));
+            generalShare[i] = minVal[i] + tempRandom;
+            leftValue -= tempRandom;
+        }
+        generalShare[3] = minVal[3] + leftValue;
+        int counter = 0;
+        for (int val : generalShare) {
+            if (val == 0) caseTypeState[counter] = false;
+            counter++;
+        }
     }
 
     // Sets share between case types
@@ -97,11 +152,8 @@ public class PasswordGenerator {
         private static boolean shareScopeStatus(int[] numberArray, char type) {
             for (int i : numberArray) {
                 if (i < 0 || i > 100) {
-                    if (type == 'i') {
-                        throw new ValueShareException(0, 100);
-                    } else {
-                        throw new ValueShareException(0, 1);
-                    }
+                    if (type == 'i') throw new ValueShareException(0, 100);
+                    else throw new ValueShareException(0, 1);
                 }
             }
             return false;
@@ -113,6 +165,19 @@ public class PasswordGenerator {
             if (sum != 100 && type == 'i') throw new ValueShareException("integer", 100);
             if (sum != 100 && type == 'd') throw new ValueShareException("decimal", 1);
             return false;
+        }
+
+        private static int decimalPlacesStatus(double number) {
+            int tempChecker1, tempChecker2;
+            tempChecker1 = ((int) (number* 100)) * 100000;
+            tempChecker2 = (int) (number * 10000000);
+            if (tempChecker1 != tempChecker2) {
+                throw new ValueShareException(
+                    "The value entered can have a maximum of 2 decimal places\n" +
+                    "* The value provided was " + number
+                );
+            }
+            return (int) round(number * 100);
         }
 
         private static int[] decimalPlacesStatus(double[] numberArray) {
@@ -129,7 +194,7 @@ public class PasswordGenerator {
             }
             int[] rules = new int[4];
             for (int i = 0; i < numberArray.length; i++) {
-                rules[i] = (int) (numberArray[i] * 100);
+                rules[i] = (int) round(numberArray[i] * 100);
             }
             return rules;
         }

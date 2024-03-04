@@ -9,6 +9,9 @@ public class ValueShareException extends RuntimeException {
             "Provided number on index must be from closed interval between " + lowerBound + " and " + upperBound
         );
     }
+    public ValueShareException(char min, String higherThan) {
+        super ("Minimum value cannot be higher than" + higherThan);
+    }
     public ValueShareException(String errorMessage) {
         super(errorMessage);
     }
