@@ -62,11 +62,7 @@ public class PasswordGenerator {
         int maxValue = 100;
         int tempRandom;
         for (int i = 0; i < share.length - 1; i++) {
-            if (fullRandom) tempRandom = (int) (random() * (maxValue + 1));
-            else {
-                tempRandom = maxValue - ((4-i) * minVal) + 1;
-                tempRandom = (int) (minVal + (random() * tempRandom));
-            }
+            tempRandom = randomType(fullRandom, minVal, maxValue, i);
             maxValue -= tempRandom;
             this.generalShare[i] = tempRandom;
             if (tempRandom == 0) this.caseTypeState[i] = false;
@@ -83,39 +79,53 @@ public class PasswordGenerator {
         this.includeGeneralShare = false;
     }
 
-    public void setRandomShare(double minUpper, double minLower, double minNumber, double minSpecial) {
-        double[] decimalArray = {minUpper, minLower, minNumber, minSpecial};
-        int[] newMinVal = Validation.decimalPlacesStatus(decimalArray);
-        setRandomShare(newMinVal[0], newMinVal[1], newMinVal[2], newMinVal[3], 'd');
+    private int randomType(boolean fullRandom, int minVal, int maxVal, int counter) {
+        int tempRandom;
+        if (fullRandom) tempRandom = (int) (random() * (maxVal + 1));
+        else {
+            tempRandom = maxVal - ((4-counter) * minVal) + 1;
+            tempRandom = (int) (minVal + (random() * tempRandom));
+        }
+        return tempRandom;
     }
 
     public void setRandomShare(int minUpper, int minLower, int minNumber, int minSpecial) {
         setRandomShare(minUpper, minLower, minNumber, minSpecial, 'i');
     }
 
-    public void setRandomShare(int minUpper, int minLower, int minNumber, int minSpecial, char type) {
+    public void setRandomShare(double minUpper, double minLower, double minNumber, double minSpecial) {
+        double[] decimalArray = {minUpper, minLower, minNumber, minSpecial};
+        int[] newMinVal = Validation.decimalPlacesStatus(decimalArray);
+        setRandomShare(newMinVal[0], newMinVal[1], newMinVal[2], newMinVal[3], 'd');
+    }
+
+    private void setRandomShare(int minUpper, int minLower, int minNumber, int minSpecial, char type) {
         int[] minVal = {minUpper, minLower, minNumber, minSpecial};
         int sum = 0;
         for (int val : minVal) sum += val;
-        String higerThan = "100";
-        if (sum > 100) {
-            if (type == 'd') higerThan = "1.0";
-            throw new ValueShareException(
-                "Sum of provided minimum values cannot be higher than " + higerThan
-            );
-        }
+        checkSumUp(sum, type);
         int leftValue = 100 - sum;
         int tempRandom;
         for (int i = 0; i < minVal.length - 1; i++) {
             tempRandom = (int) (random() * (leftValue + 1));
-            generalShare[i] = minVal[i] + tempRandom;
+            this.generalShare[i] = minVal[i] + tempRandom;
             leftValue -= tempRandom;
         }
-        generalShare[3] = minVal[3] + leftValue;
+        this.generalShare[3] = minVal[3] + leftValue;
         int counter = 0;
-        for (int val : generalShare) {
-            if (val == 0) caseTypeState[counter] = false;
+        for (int val : this.generalShare) {
+            if (val == 0) this.caseTypeState[counter] = false;
             counter++;
+        }
+    }
+
+    private void checkSumUp(int sum, char type) {
+        String higherThan = "100";
+        if (sum > 100) {
+            if (type == 'd') higherThan = "1.0";
+            throw new ValueShareException(
+                "Sum of provided minimum values cannot be higher than " + higherThan
+            );
         }
     }
 
@@ -125,9 +135,9 @@ public class PasswordGenerator {
         if (checkScopeStatus) this.checkScopeStatus = Validation.shareScopeStatus(shareValue, 'i');
         if (checkShareSum) this.checkShareSum = Validation.shareSumStatus(shareValue, 'i');
         if ((!checkShareSum) && (!checkScopeStatus)) {
-            for (int i = 0; i < generalShare.length; i++) {
+            for (int i = 0; i < this.generalShare.length; i++) {
                 if (shareValue[i] == 0) {
-                    caseTypeState[i] = false;
+                    this.caseTypeState[i] = false;
                 }
                 generalShare[i] = shareValue[i];
             }
@@ -213,26 +223,19 @@ public class PasswordGenerator {
         }
     }
 
-    public void setLength(int minCharLength, int maxCharLength) {
-        throw new ExactValueException(
-            "Provide only one vale to set length.\n " +
-            "* To set range use .setPasswordRange() method."
-        );
-    }
-
     // Sets the range of the password
     public void setRange(int minCharLength, int maxCharLength) {
         if (minCharLength > 0 && maxCharLength > 0) {
             this.isPasswordRange = true;
             this.exactPasswordLength = -1;
             if (minCharLength < maxCharLength) {
-                minMaxRange[0] = minCharLength;
-                minMaxRange[1] = maxCharLength;
+                this.minMaxRange[0] = minCharLength;
+                this.minMaxRange[1] = maxCharLength;
             } else if (minCharLength == maxCharLength) {
                 setLength(minCharLength);
             } else {
-                minMaxRange[0] = maxCharLength;
-                minMaxRange[1] = minCharLength;
+                this.minMaxRange[0] = maxCharLength;
+                this.minMaxRange[1] = minCharLength;
             }
         } else {
             StringBuilder errorMessage = new StringBuilder(" value cannot be less than 1");
@@ -247,12 +250,6 @@ public class PasswordGenerator {
         }
     }
 
-    public void setRange(int exactCharLength) {
-        throw new RangeValueException(
-                "Provide second value to set range.\n * To set exact length use .setPasswordLength() method."
-        );
-    }
-
     // Sets rules same as at the beginning of the instance
     public void setDefaultRules() {
         setLength(30);
@@ -265,15 +262,8 @@ public class PasswordGenerator {
 
     // Generates password based on set rules or default
     public String generate() {
-        if (!includeGeneralShare) {
-            setRandomShare();
-        }
-        int currentLength;
-        if (isPasswordRange) {
-            currentLength = setCurrentLength();
-        } else {
-            currentLength = this.exactPasswordLength;
-        }
+        if (!includeGeneralShare) setRandomShare();
+        int currentLength = isPasswordRange ? setCurrentLength() : exactPasswordLength;
         int[] caseUsage = getCaseUsage(currentLength);
         StringBuilder blob = new StringBuilder();
         int blobLength = 0;
@@ -303,15 +293,11 @@ public class PasswordGenerator {
             casePerType[i] = (int) (floor(mantissa));
         }
         int sum = 0;
-        for (int len : casePerType) {
-            sum += len;
-        }
+        for (int len : casePerType) sum += len;
         while (sum < length) {
             int indexOfMax = 0;
             for (int i = 1; i < caseMantissa.length; i++) {
-                if (caseMantissa[i] > caseMantissa[indexOfMax]) {
-                    indexOfMax = i;
-                }
+                if (caseMantissa[i] > caseMantissa[indexOfMax]) indexOfMax = i;
             }
             casePerType[indexOfMax] += 1;
             caseMantissa[indexOfMax] = 0;
@@ -377,7 +363,6 @@ public class PasswordGenerator {
     }
 
     // Include selected characters
-
     public void include(char character) {
         group(character, 'i');
     }
@@ -439,7 +424,6 @@ public class PasswordGenerator {
     }
 
     // Exclude selected characters
-
     public void exclude(char character) {
         group(character, 'e');
     }
@@ -490,8 +474,8 @@ public class PasswordGenerator {
             charCollection[innerArray] = Size.finalExclude(position, charCollection[innerArray]);
         } else {
             throw new IncludeExcludeException(
-                    "Provided number for collection type do not exist" +
-                            "* Available options are: 1, 2, 3, 4"
+                "Provided number for collection type do not exist" +
+                "* Available options are: 1, 2, 3, 4"
             );
         }
     }
@@ -537,8 +521,8 @@ public class PasswordGenerator {
                 else if (type == 3 && (tempChar > 47 && tempChar < 58)) state = true;
                 else if (type == 4) state = true;
                 if (!state) throw new IncludeExcludeException(
-                        "Char array must be consistent \n " +
-                                "* It should not contains different case types"
+                    "Char array must be consistent \n " +
+                    "* It should not contains different case types"
                 );
             }
         }
@@ -636,9 +620,7 @@ public class PasswordGenerator {
         private static int[] checkPosition(char character, char[] collection) {
             ArrayList<Integer> position = new ArrayList<Integer>();
             for (int i = 0; i < collection.length; i++) {
-                if (character == collection[i]) {
-                    position.add(i);
-                }
+                if (character == collection[i]) position.add(i);
             }
             int[] array = position.stream().mapToInt(i -> i).toArray();
             return array;
@@ -733,6 +715,14 @@ public class PasswordGenerator {
 
     }
 
+    // Return length of current object
+    public int length() {
+        if (isPasswordRange) throw new RangeValueException(
+            "Password is set to a range value and does not contain an exact length"
+        );
+        else return exactPasswordLength;
+    }
+
     // Print out characters that are used in instance
     public void showCaseCollection(String separator) {
         for (int i = 0; i < charCollection.length; i++) {
@@ -775,7 +765,7 @@ public class PasswordGenerator {
                 "Special case: " + generalShare[3] + "%\n"
             );
         }
-        System.out.println(allRules.toString());
+        System.out.println(allRules);
     }
 
 }
