@@ -40,7 +40,7 @@ char[] array = {'&', '^', '~'}; // Sample array
 password.exclude(' '); // Exclude space character from "special" set
 password.exclude('3', "number"); // Delete '3' from "number" type set
 password.exclude('X', "special", true); // Allow ignoring non-existent characters 
-password.exclude(array); // Automatically delete provided characters (in that case form "special" set)
+password.exclude(array); // Automatically delete provided characters (in that case from "special" set)
 ```
 #### Method arguments that can be used interchangeably:
 | Original  | Equivalent |
