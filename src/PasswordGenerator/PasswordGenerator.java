@@ -715,6 +715,19 @@ public class PasswordGenerator {
 
     }
 
+    // Return range of current object
+    public int[] range() {
+        if (!isPasswordRange) throw new RangeValueException(
+            "Password is set to a length value and does not contain the range"
+        );
+        else {
+            int[] tempMinMaxRange = new int[2];
+            tempMinMaxRange[0] = minMaxRange[0];
+            tempMinMaxRange[1] = minMaxRange[1];
+            return tempMinMaxRange;
+        }
+    }
+
     // Return length of current object
     public int length() {
         if (isPasswordRange) throw new RangeValueException(

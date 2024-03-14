@@ -1,18 +1,18 @@
 ## Password Generator
-The Password Generator is a Java library designed to create random passwords with flexible rules and customization options. It allows you to specify the length of the password, set length ranges, and define the percentage distribution of character types (upper case, lower case, numbers, and special characters).
+The Password Generator is a Java library designed to create random passwords with flexible rules and customization options. It allows you to specify the length of the password, set length ranges, and define the percentage distribution of character types (upper case, lower case, numbers, and special characters). The library also allows the inclusion and exclusion of selected characters. 
 ### Getting Started
 To get started, create an instance of the **PasswordGenerator**.
 ```Java
 PasswordGenerator password = new PasswordGenerator();
 ```
 ### Password Length
-You can set the exact length of the password or define a range.
+You can set the exact length of the password or define a range. By default, password length is set to 30.
 ```Java
 password.setLength(27); // Set exact length of password
 password.setRange(20, 30); // Set password length range
 ```
 ### Character Type Distribution
-You can specify the percentage distribution for each character type (*upper*, *lower*, *number*, *special*), using integers or decimals. Integers must add up to **100** and decimals to **1.0**.
+You can specify the percentage distribution for each character type (*upper*, *lower*, *number*, *special*), using integers or decimals. Integers must add up to **100** and decimals to **1.0**. By default, the password distribution is set at 25% for each type. 
 ```Java
 password.setConstantShare(30, 15, 30, 15); // 30% upper, 15% lower, 30% number, 15% special
 password.setConstantShare(0.3, 0.15, 0.3, 0.15); // Same as above using decimals
@@ -34,7 +34,7 @@ password.include(array);              // Automatically appends array
 password.exclude(' ');               // Exclude space character
 password.exclude('X', "upper");       // Delete 'X' from upper type set
 ```
-#### Types Arguments that can be used interchangeably
+#### Method arguments that can be used interchangeably
 | Oryginal  | Equivalent |
 |:---------:|:----------:|
 |  "upper"  | 1 |
@@ -42,14 +42,15 @@ password.exclude('X', "upper");       // Delete 'X' from upper type set
 | "number"  | 3 |
 | "special" | 4 |
 ### Generating Password
-Generate a password based on the defined rules:
+To generate a password based on the defined rules, you must assign the result to a variable of type **String**.
 ```Java
 String samplePassword = password.generate();
 ```
 ### Retrieving Information
-Retrieve information about the rules of password generating.
+For password generating rules *length()* and *range()* must be assigned to variables. Other methods print values to the console. In *showCaseCollection("\n")* it is necessary to specify a character to separate groups of characters. 
 ```Java
 int length = password.length(); // Return length rule of current password
+int[] range = password.range(); // Return range rule of current password
 password.showCaseCollection("\t"); // Print characters collection ("\t" - separates types arrays)
 password.showRules(); // Prints character distribution
 ```
