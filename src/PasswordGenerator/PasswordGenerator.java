@@ -4,9 +4,11 @@ import PasswordGenerator.PasswordExceptions.ExactValueException;
 import PasswordGenerator.PasswordExceptions.IncludeExcludeException;
 import PasswordGenerator.PasswordExceptions.ValueShareException;
 import PasswordGenerator.PasswordExceptions.RangeValueException;
+import static PasswordGenerator.SecureDouble.*;
 
 import java.util.ArrayList;
-import static java.lang.Math.*;
+import static java.lang.Math.round;
+import static java.lang.Math.floor;
 
 public class PasswordGenerator {
 
